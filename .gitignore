@@ -1,0 +1,18 @@
+# Dependências
+node_modules/
+**/node_modules/
+
+# Arquivos compilados
+dist/
+**/dist/
+
+# Variáveis de ambiente
+.env
+.env.*
+!.env.example
+**/.env
+**/.env.*
+!**/.env.example
+
+# Logs
+npm-debug.log*
