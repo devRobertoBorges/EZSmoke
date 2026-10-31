@@ -9,6 +9,7 @@ export const env = {
     dbName: process.env.DB_NAME || "ezsmoke",
     jwtSecret: process.env.JWT_SECRET || "",
     jwtExpiresInSeconds: 60 * 60 * 24 * 7, // 7 dias
+    corsOrigin: process.env.CORS_ORIGIN || "http://localhost:5173",
 };
 
 // Sem a chave, qualquer token seria inseguro.
