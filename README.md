@@ -14,9 +14,13 @@ O projeto não tem como objetivo ser uma plataforma de treinamento, curso ou com
 
 ## 📌 Status do projeto
 
-**Fase atual:** Planejamento e definição da arquitetura.
+**Fase atual:** Planejamento e definição da arquitetura — **revisão v2**.
 
-A interface, regras de negócio, modelo inicial de banco de dados e arquitetura foram definidos. A implementação ainda não foi iniciada.
+A interface, regras de negócio, modelo de banco de dados e arquitetura foram definidos e revisados. A implementação ainda não foi iniciada.
+
+O schema SQL de referência está em [`database/schema.sql`](database/schema.sql).
+
+As mudanças desta revisão estão resumidas em [Revisão v2](#-revisão-v2--31102026), no final do documento.
 
 ---
 
@@ -41,6 +45,7 @@ O EZSmoke será uma biblioteca de utilitárias organizada por:
 - Mapa
 - Lado (TR / CT)
 - Região (A / B / MID)
+- Área (callout, ex.: Jungle, Banana, Long)
 - Tipo de utilitária
 - Busca textual
 
@@ -50,6 +55,10 @@ Tipos de utilitária inicialmente suportados:
 - Flash
 - Molotov
 - HE
+
+### Terminologia
+
+O projeto usa **"utilitária"** (feminino) em toda a interface e documentação. Textos como "Todos os utilitários" ou "Utilitários CS2" na referência visual devem ser ajustados para "Todas as utilitárias" / "Utilitárias CS2".
 
 ---
 
@@ -91,7 +100,7 @@ flash b
 mirage smoke a
 ```
 
-O sistema deve conseguir encontrar resultados relevantes sem exigir que o usuário conheça o nome exato da lineup.
+O sistema deve conseguir encontrar resultados relevantes sem exigir que o usuário conheça o nome exato da lineup. Ver [Busca](#-busca) para o funcionamento.
 
 ---
 
@@ -108,36 +117,50 @@ Esses mapas terão o conteúdo completo disponível gratuitamente.
 
 ### Premium
 
-Os demais mapas serão Premium.
-
-Exemplos:
+Os demais mapas serão Premium:
 
 - Mirage
-- Ancient
 - Nuke
 - Vertigo
+- Ancient
 - Anubis
+- Overpass
 
-A estrutura será preparada para adicionar novos mapas posteriormente.
+A estrutura será preparada para adicionar novos mapas posteriormente, já que o map pool competitivo do CS2 muda com o tempo. A ordem de exibição é controlada pelo campo `sort_order`.
+
+### Conteúdo de lançamento
+
+O conteúdo é o principal gargalo do projeto, não o código. Meta de lançamento:
+
+- **Dust II e Inferno completos**: cerca de 20–30 lineups cada
+- **2 a 3 mapas Premium** já com conteúdo relevante
+
+Um mapa Premium com poucas lineups frustra quem pagou. É melhor lançar menos mapas Premium, porém bem cobertos.
 
 ---
 
 # 🔎 Página do mapa
 
-Ao entrar em um mapa, **todas as utilitárias disponíveis são exibidas inicialmente**.
+Ao entrar em um mapa, **todas as utilitárias publicadas são exibidas inicialmente**.
 
 Nenhum filtro é obrigatório.
 
+### Troca rápida de mapa
+
+No topo da página há uma linha de chips com os mapas, permitindo trocar de mapa sem voltar à Home (conforme a referência visual mobile).
+
+### Filtros
+
 O usuário pode refinar os resultados usando:
 
-### Lado
+#### Lado
 
 ```text
 TR
 CT
 ```
 
-### Região
+#### Região
 
 ```text
 A
@@ -145,7 +168,7 @@ B
 MID
 ```
 
-### Tipo
+#### Tipo
 
 ```text
 Smoke
@@ -206,7 +229,11 @@ A execução fica na página individual.
 
 # 🎯 Página da lineup
 
-A página individual é voltada para execução rápida.
+A página individual é voltada para execução rápida e tem URL própria e compartilhável:
+
+```text
+/mirage/smoke-jungle
+```
 
 Estrutura:
 
@@ -216,7 +243,7 @@ Estrutura:
 SMOKE JUNGLE
 Mirage · TR · A · Smoke
 
-[ GIF DA EXECUÇÃO ]
+[ VÍDEO DA EXECUÇÃO — autoplay, mudo, em loop ]
 
 📍 Posição
 Palace
@@ -224,13 +251,19 @@ Palace
 🎯 Mira
 Canto superior direito
 
-🖱️ Arremesso
+🖱️ Clique
+Esquerdo
+
+🏃 Movimento
+Parado
+
+🪂 Arremesso
 Jumpthrow
 
 ⚠️ Lineup incorreta?
 ```
 
-O GIF aparece rapidamente na página e é reproduzido automaticamente em loop.
+A mídia aparece rapidamente e é reproduzida automaticamente em loop, com o mesmo comportamento de um GIF para o usuário.
 
 Não haverá:
 
@@ -247,44 +280,54 @@ Não haverá:
 
 # 🎞️ Mídia
 
-O MVP utilizará GIFs para demonstrar a execução das lineups.
+### Formato
+
+O MVP utilizará **vídeo curto (MP4 / H.264)** para demonstrar a execução das lineups, reproduzido como um GIF:
+
+```html
+<video autoplay muted loop playsinline></video>
+```
+
+Motivo: um GIF em 720p e 15–20 FPS costuma ser bem maior que o vídeo equivalente e tem qualidade inferior. Como o usuário frequentemente consulta pelo celular, no meio da partida e em rede móvel, o tamanho do arquivo impacta diretamente a proposta do produto.
+
+- **MP4 (H.264)**: formato principal, compatível com todos os navegadores
+- **WebM**: opcional, para otimização futura
+- **GIF**: apenas como fallback, se necessário
 
 ### Padrão inicial
 
-- Formato: GIF
 - Mesmo arquivo para desktop e mobile
 - Aproximadamente 3–6 segundos
 - Loop automático
-- Aproximadamente 15–20 FPS
-- Até aproximadamente 720p quando adequado
 - Sem áudio
-- Meta de aproximadamente 3 MB por GIF
+- Até 720p quando adequado
+- Meta inicial de aproximadamente 1 MB por arquivo
 
 Os valores são referências de otimização e podem ser ajustados durante a implementação.
 
 ### Carregamento
 
-GIFs **não serão carregados na listagem de resultados**.
+Vídeos **não serão carregados na listagem de resultados**.
 
 A listagem utilizará imagens estáticas.
 
-O GIF será carregado quando o usuário abrir a lineup.
+O vídeo será carregado quando o usuário abrir a lineup.
 
 ### Armazenamento
 
-Os arquivos de mídia não serão armazenados diretamente no MySQL.
+Os arquivos de mídia não serão armazenados no MySQL.
 
-O banco armazenará apenas referências/URLs:
+O banco armazena:
 
 ```text
-result_image_url
-execution_media_url
-execution_media_type
+result_image_url       → URL pública da imagem estática (prévia)
+execution_media_key    → chave do arquivo no storage (não é uma URL pública)
+execution_media_type   → MP4 / WEBM / GIF
 ```
 
-O storage/CDN será definido posteriormente.
+A URL de execução **é gerada pelo backend** a cada requisição autorizada (ver [Segurança do Premium](#️-segurança-do-premium)).
 
-A estrutura será preparada para, no futuro, permitir formatos como WebM ou MP4 sem alterar o conceito da lineup.
+O storage/CDN será definido posteriormente, mas deverá suportar **URLs assinadas com expiração** (ex.: S3, Cloudflare R2).
 
 ---
 
@@ -348,16 +391,25 @@ e todo o conteúdo Premium.
 
 R$ XX,XX — pagamento único
 
-[ COMPRAR PREMIUM ]
+[ DESBLOQUEAR PREMIUM ]
 ```
 
 O preço definitivo ainda não foi definido.
 
+### Textos dos botões (CTA)
+
+Como o Premium é **pagamento único**, a interface **não deve usar "Assinar" ou "Assinatura"**, que passam a ideia de mensalidade.
+
+Textos aprovados:
+
+- **Desbloquear Premium**
+- **Comprar Premium**
+
+> A referência visual atual usa "Assinar Premium" no banner da Home (desktop e mobile). Esse texto deve ser substituído na implementação.
+
 ### Modelo de pagamento
 
 O Premium **não será uma assinatura recorrente**.
-
-O modelo definido é:
 
 ```text
 Pagamento único
@@ -376,11 +428,17 @@ Não haverá inicialmente:
 
 O acesso Premium ficará vinculado à conta do usuário.
 
+O gateway deverá oferecer **Pix**, além de cartão, já que parte relevante do público não possui cartão de crédito.
+
+### Fonte única da verdade
+
+O usuário é Premium **se e somente se** existir uma compra com status `PAID` vinculada à conta dele.
+
+Não existe um campo "premium" separado na tabela `users`. Isso evita que os dois dados fiquem inconsistentes.
+
 ### Reembolso
 
 O reembolso será tratado **manualmente**.
-
-Fluxo definido:
 
 ```text
 Usuário solicita reembolso por e-mail
@@ -391,12 +449,14 @@ Administrador realiza o reembolso pelo gateway
         ↓
 Administrador acessa o painel Admin
         ↓
-Revoga o Premium da conta
+Marca a compra como REFUNDED
         ↓
 Usuário volta ao acesso Free
 ```
 
-A compra não será apagada do banco. Ela permanecerá registrada para manter o histórico, podendo ter o status alterado de `PAID` para `REFUNDED`.
+Marcar a compra como `REFUNDED` **é** a revogação do Premium, já que o acesso é derivado das compras `PAID`.
+
+A compra não é apagada do banco. Ela permanece registrada com data do reembolso, administrador responsável e observação.
 
 Após a compra aprovada, o usuário deve retornar à lineup que estava tentando acessar.
 
@@ -420,8 +480,6 @@ sem criar uma conta.
 
 Um usuário pode optar por criar uma conta mesmo sem Premium.
 
-Nesse caso:
-
 ```text
 Plano: FREE
 Conta: cadastrada
@@ -436,7 +494,6 @@ A arquitetura será preparada para futuras funcionalidades, como:
 - Preferências
 - Sincronização entre dispositivos
 - Notificações
-- Outras funcionalidades para usuários cadastrados
 
 ## Premium
 
@@ -444,15 +501,37 @@ Para comprar o Premium, o usuário terá uma conta.
 
 A compra ficará vinculada à conta para que o acesso continue disponível em diferentes dispositivos.
 
+## Recuperação de senha
+
+A recuperação de senha **faz parte do MVP**. Um usuário que pagou e não consegue entrar na conta perde o acesso ao que comprou.
+
+```text
+Usuário informa o e-mail
+        ↓
+Backend gera um token aleatório e envia o link por e-mail
+        ↓
+Banco armazena apenas o hash do token, com expiração
+        ↓
+Usuário define a nova senha
+        ↓
+Token é marcado como usado
+```
+
+A resposta do endpoint é sempre a mesma, exista ou não o e-mail, para não revelar quais contas existem.
+
+## Login via Steam (em avaliação)
+
+O público do EZSmoke é inteiramente de jogadores de CS2, que já possuem conta Steam. O login via Steam (OpenID) elimina senha, reduz atrito no cadastro e facilita a compra.
+
+Fica registrado como alternativa a ser avaliada antes da implementação da autenticação.
+
 ---
 
 # 🛡️ Segurança do Premium
 
-A proteção Premium será feita no **backend**.
+A proteção Premium é feita no **backend**.
 
-Não será suficiente esconder conteúdo ou botões no React.
-
-Fluxo:
+Não é suficiente esconder conteúdo ou botões no React.
 
 ```text
 Usuário solicita lineup
@@ -464,29 +543,61 @@ Mapa é FREE?
    │
    └── NÃO
         ↓
-Usuário possui Premium?
+Usuário possui compra PAID?
    ├── SIM → libera
-   └── NÃO → acesso bloqueado
+   └── NÃO → retorna a versão bloqueada
 ```
+
+### Versão bloqueada
+
+Para lineups Premium sem acesso, a API retorna **apenas** os dados do card:
+
+```text
+nome, mapa, lado, região, área, tipo, descrição, imagem de prévia
+```
+
+Os campos abaixo **nunca** são enviados nesse caso:
+
+```text
+position, aim, click_type, movement, throw_technique, URL da mídia
+```
+
+### URLs de mídia assinadas
+
+Se a mídia ficar em uma URL pública e fixa, basta alguém compartilhar o link para burlar o Premium.
+
+Por isso:
+
+- O banco guarda apenas a **chave** do arquivo no storage
+- Para usuários autorizados, o backend gera uma **URL assinada com expiração curta**
+- Os arquivos de execução Premium não são acessíveis publicamente no storage
+
+### Webhook de pagamento
+
+- A **assinatura** de todo webhook é verificada antes de qualquer processamento
+- Cada evento é registrado em `webhook_events`; eventos repetidos são ignorados
+- `provider_payment_id` é único, impedindo registrar o mesmo pagamento duas vezes
+
+Sem a verificação de assinatura, qualquer pessoa poderia chamar o webhook e se tornar Premium.
 
 ---
 
 # ⚠️ Reports
 
-Usuários poderão informar quando uma lineup estiver incorreta ou desatualizada.
-
-Exemplo:
+Usuários — inclusive visitantes sem conta — poderão informar quando uma lineup estiver incorreta ou desatualizada.
 
 ```text
 ⚠️ Essa lineup está incorreta?
 ```
 
-Possíveis motivos:
+Motivos:
 
 - Lineup não funciona mais
-- Imagem/GIF incorreto
+- Imagem/vídeo incorreto
 - Informações incorretas
 - Outro
+
+Como o endpoint é aberto, ele terá **rate limit** por IP.
 
 O administrador poderá:
 
@@ -505,15 +616,20 @@ O painel administrativo deverá permitir:
 
 ### Lineups
 
-- Criar
+- Criar (como rascunho)
 - Editar
+- Publicar
 - Desativar
 - Excluir
-- Publicar
-- Enviar imagem
-- Enviar GIF
-- Definir Free/Premium através do mapa
-- Revogar o Premium de uma conta após reembolso manual
+- Enviar imagem de prévia
+- Enviar vídeo de execução
+
+O caráter Free/Premium de uma lineup é definido pelo mapa a que ela pertence.
+
+### Compras
+
+- Listar compras
+- Marcar compra como reembolsada (revoga o Premium)
 
 ### Reports
 
@@ -528,6 +644,7 @@ O painel administrativo deverá permitir:
 
 - Criar
 - Editar
+- Ordenar
 - Ativar/desativar
 
 ### Usuários
@@ -539,7 +656,9 @@ O painel administrativo deverá permitir:
 
 # 🗄️ Banco de dados
 
-O modelo inicial possui cinco tabelas principais:
+O schema completo está em [`database/schema.sql`](database/schema.sql) (MySQL 8).
+
+Tabelas principais:
 
 ```text
 users
@@ -547,6 +666,13 @@ maps
 lineups
 premium_purchases
 reports
+```
+
+Tabelas de apoio:
+
+```text
+password_reset_tokens   → recuperação de senha
+webhook_events          → idempotência dos webhooks de pagamento
 ```
 
 A estrutura principal do produto é:
@@ -564,19 +690,16 @@ Os recursos auxiliares se relacionam assim:
 ```text
 USERS
   ├──< PREMIUM_PURCHASES
+  ├──< PASSWORD_RESET_TOKENS
   │
   └──< REPORTS >──── LINEUPS >──── MAPS
 ```
 
-`reports` é uma funcionalidade secundária: ele apenas registra um problema relacionado a uma lineup. Não é parte do fluxo principal de consulta.
+`reports` é uma funcionalidade secundária: apenas registra um problema relacionado a uma lineup.
 
 ---
 
 ## `users`
-
-Responsável pelas contas.
-
-Principais campos:
 
 ```text
 id
@@ -584,6 +707,8 @@ name
 email
 password_hash
 role
+email_verified_at
+is_active
 created_at
 updated_at
 ```
@@ -599,10 +724,6 @@ ADMIN
 
 ## `maps`
 
-Responsável pelos mapas.
-
-Principais campos:
-
 ```text
 id
 name
@@ -610,18 +731,17 @@ slug
 image_url
 is_free
 is_active
+sort_order
 created_at
 updated_at
 ```
 
 A característica Free/Premium pertence ao mapa.
 
-Exemplo:
-
 ```text
 Dust II → FREE
 Inferno → FREE
-Mirage → PREMIUM
+Mirage  → PREMIUM
 Ancient → PREMIUM
 ```
 
@@ -631,24 +751,26 @@ Ancient → PREMIUM
 
 Tabela central do produto.
 
-Principais campos:
-
 ```text
 id
 map_id
 name
+slug
 side
 region
+area
 utility_type
 description
+keywords
 position
 aim
-throw_type
-keywords
+click_type
+movement
+throw_technique
 result_image_url
-execution_media_url
+execution_media_key
 execution_media_type
-is_active
+status
 created_at
 updated_at
 ```
@@ -670,6 +792,10 @@ B
 MID
 ```
 
+### Area
+
+Texto livre com o callout principal (ex.: `Jungle`, `Banana`, `Long`, `Connector`). Complementa a região, já que muitas utilitárias são de controle de área e não de bomb.
+
 ### Utility type
 
 ```text
@@ -679,25 +805,59 @@ MOLOTOV
 HE
 ```
 
+### Click type
+
+```text
+LEFT    → clique esquerdo (arremesso forte)
+RIGHT   → clique direito (arremesso fraco)
+BOTH    → ambos os cliques (arremesso médio)
+```
+
+### Movement
+
+```text
+STANDING
+CROUCHING
+WALKING
+RUNNING
+```
+
+### Throw technique
+
+```text
+NORMAL
+JUMPTHROW
+```
+
+A combinação cobre os casos comuns. Exemplo: "run jumpthrow" = `RUNNING` + `JUMPTHROW`.
+
+### Status
+
+```text
+DRAFT       → em criação, não aparece no site
+PUBLISHED   → visível
+INACTIVE    → desativada (ex.: quebrou após atualização do mapa)
+```
+
+### Slug
+
+Identificador da lineup na URL, único dentro do mapa. Permite links compartilháveis e ajuda no SEO:
+
+```text
+/mirage/smoke-jungle
+```
+
 ### Keywords
 
 Campo utilizado para auxiliar a busca.
 
-Exemplo:
-
 ```text
-jungle, palace, tetris, a
+jungle, palace, tetris
 ```
-
-Isso permite encontrar uma lineup mesmo quando o termo pesquisado não está exatamente no nome.
 
 ---
 
 ## `premium_purchases`
-
-Responsável pelas compras únicas do Premium.
-
-Principais campos:
 
 ```text
 id
@@ -705,38 +865,53 @@ user_id
 status
 provider
 provider_payment_id
+amount_cents
+currency
 purchased_at
+refunded_at
+refunded_by
+refund_note
 created_at
 updated_at
 ```
 
-Status definidos:
+Status:
 
 ```text
-PENDING
-PAID
-REFUNDED
+PENDING    → pagamento iniciado
+PAID       → aprovado; concede Premium
+FAILED     → recusado ou expirado (ex.: Pix não pago)
+REFUNDED   → reembolsado; Premium revogado
 ```
+
+`amount_cents` e `currency` guardam o valor efetivamente pago, já que o preço pode mudar ao longo do tempo.
 
 O Premium não possui `expires_at`, `plan`, `MONTHLY` ou `YEARLY`, pois o modelo é de **pagamento único com acesso permanente** enquanto a compra estiver válida.
 
-O reembolso é tratado manualmente por e-mail e pelo administrador. Após o reembolso, a compra permanece registrada com status `REFUNDED` e o acesso Premium é revogado pelo painel administrativo.
+---
 
 ## `reports`
-
-Responsável pelas denúncias de lineups.
-
-Principais campos:
 
 ```text
 id
 lineup_id
-user_id
+user_id        (opcional — visitante pode reportar)
 reason
 comment
 status
+resolved_by
+resolved_at
 created_at
 updated_at
+```
+
+Motivos:
+
+```text
+NOT_WORKING
+WRONG_MEDIA
+WRONG_INFO
+OTHER
 ```
 
 Status:
@@ -751,34 +926,46 @@ DISMISSED
 
 # 🔍 Busca
 
-A busca será combinada com os filtros estruturados.
+A busca é combinada com os filtros estruturados e funciona em duas etapas.
 
-Exemplo:
+### 1. Interpretação dos termos
+
+Antes da busca textual, o backend identifica termos que correspondem a filtros conhecidos:
 
 ```text
-mirage jungle smoke
+"mirage smoke tr jungle"
+
+mirage  → filtro de mapa
+smoke   → filtro de tipo
+tr      → filtro de lado
+jungle  → sobra para a busca textual
 ```
 
-O backend deverá conseguir interpretar os termos e procurar informações relevantes em campos como:
+Termos reconhecidos:
+
+- Nome ou slug de mapa (`mirage`, `dust`, `dust2`, `inferno`...)
+- Tipo (`smoke`, `flash`, `molly`, `molotov`, `he`...)
+- Lado (`tr`, `t`, `ct`)
+- Região (`a`, `b`, `mid`)
+
+### 2. Busca textual
+
+O que sobra é pesquisado com o índice **FULLTEXT** do MySQL nos campos:
 
 - Nome
+- Área
 - Descrição
 - Keywords
-- Mapa
-- Região
-- Tipo
-- Lado
+
+Isso evita `LIKE '%termo%'`, que não usa índice e fica lento conforme o conteúdo cresce.
 
 A primeira versão não exigirá inteligência artificial.
-
-A busca será baseada em dados estruturados e pesquisa textual.
 
 Posteriormente poderão ser adicionados:
 
 - Sinônimos
 - Tolerância a erros
-- Relevância
-- Ranking dos resultados
+- Ranking de relevância
 - Busca mais inteligente
 
 ---
@@ -789,29 +976,44 @@ A experiência deve priorizar rapidez.
 
 Principais decisões:
 
-- Busca direta
+- Busca direta, com interpretação de termos e índice FULLTEXT
 - Filtros simples
 - Imagens estáticas nas listagens
-- GIF somente na página da lineup
+- Vídeo curto (MP4) em vez de GIF, carregado somente na página da lineup
 - Storage separado do banco
 - Índices para consultas frequentes
 - Interface mobile-first
 
-O banco terá índices voltados principalmente para consultas como:
+Índice composto principal:
 
 ```text
-map
-side
-region
-utility_type
-is_active
+(map_id, status, side, region, utility_type)
 ```
+
+### Meta de experiência
+
+O fluxo "abrir o site → encontrar a utilitária → ver a execução" deve ser testado cronometrado, **no celular e em rede móvel**. Esse é o principal diferencial do EZSmoke em relação a outros sites de lineups.
 
 ---
 
 # 🏗️ Arquitetura
 
-A arquitetura planejada do backend:
+### Organização do repositório
+
+```text
+ezsmoke/
+├── backend/
+├── frontend/
+├── database/
+│   └── schema.sql
+├── docs/
+│   └── design/
+└── README.md
+```
+
+As dependências do backend (incluindo o `bcrypt`, hoje instalado na raiz) devem ficar dentro de `backend/`, e as do frontend dentro de `frontend/`.
+
+### Backend
 
 ```text
 Frontend
@@ -830,13 +1032,15 @@ MySQL
 Estrutura inicial:
 
 ```text
-src/
+backend/src/
 ├── controllers/
 ├── services/
 ├── repositories/
 ├── routes/
 ├── middlewares/
 ├── models/
+├── integrations/     → gateway de pagamento, storage de mídia, e-mail
+├── errors/
 ├── utils/
 ├── config/
 ├── app.ts
@@ -845,25 +1049,21 @@ src/
 
 ### Responsabilidades
 
-**Routes**
+**Routes** — Definem os endpoints.
 
-Definem os endpoints.
+**Controllers** — Recebem requests e retornam responses. Devem ser finos: validam a entrada, chamam o service e devolvem a resposta.
 
-**Controllers**
+**Services** — Contêm as regras de negócio. A regra de acesso Premium fica em um único lugar.
 
-Recebem requests e retornam responses.
+**Repositories** — Responsáveis pelo acesso ao banco.
 
-**Services**
+**Integrations** — Encapsulam serviços externos (pagamento, storage, e-mail) atrás de um contrato próprio, permitindo trocar de fornecedor sem alterar os services.
 
-Contêm as regras de negócio.
+**Middlewares** — Autenticação, autorização, validações, rate limit e tratamento centralizado de erros.
 
-**Repositories**
+### Frontend
 
-Responsáveis pelo acesso ao banco.
-
-**Middlewares**
-
-Autenticação, autorização, validações e outras verificações.
+A stack do frontend (React com Vite, Next.js etc.) ainda será definida. Como a busca orgânica por termos como "smoke jungle mirage" é um canal de aquisição relevante, uma solução com renderização no servidor deve ser considerada para as páginas de mapa e de lineup.
 
 ---
 
@@ -876,6 +1076,8 @@ POST /api/auth/register
 POST /api/auth/login
 POST /api/auth/logout
 GET  /api/auth/me
+POST /api/auth/forgot-password
+POST /api/auth/reset-password
 ```
 
 ## Mapas
@@ -888,25 +1090,16 @@ GET /api/maps/:slug
 ## Lineups
 
 ```http
-GET /api/lineups
-GET /api/lineups/:id
+GET /api/lineups                          → busca e filtros
+GET /api/maps/:mapSlug/lineups/:slug      → detalhe da lineup
 ```
+
+O detalhe retorna a versão completa ou a versão bloqueada, conforme o acesso do usuário.
 
 ## Reports
 
 ```http
 POST /api/lineups/:id/reports
-```
-
-## Administração
-
-```http
-POST   /api/admin/lineups
-PUT    /api/admin/lineups/:id
-DELETE /api/admin/lineups/:id
-
-GET    /api/admin/reports
-PATCH  /api/admin/reports/:id
 ```
 
 ## Premium
@@ -917,7 +1110,28 @@ GET  /api/premium/me
 POST /api/premium/webhook
 ```
 
-O webhook confirma o pagamento com o gateway e registra a compra. O reembolso não será automatizado pelo sistema no MVP: ele será realizado manualmente pelo administrador e, depois, o Premium será revogado pelo Admin.
+O webhook verifica a assinatura do gateway, registra o evento e confirma a compra. O reembolso não é automatizado no MVP.
+
+## Administração
+
+```http
+GET    /api/admin/lineups
+POST   /api/admin/lineups
+PUT    /api/admin/lineups/:id
+PATCH  /api/admin/lineups/:id/status
+DELETE /api/admin/lineups/:id
+POST   /api/admin/lineups/:id/media
+
+GET    /api/admin/maps
+POST   /api/admin/maps
+PUT    /api/admin/maps/:id
+
+GET    /api/admin/reports
+PATCH  /api/admin/reports/:id
+
+GET    /api/admin/purchases
+PATCH  /api/admin/purchases/:id/refund
+```
 
 A API poderá evoluir conforme a implementação.
 
@@ -927,20 +1141,21 @@ A API poderá evoluir conforme a implementação.
 
 A aplicação deverá considerar:
 
-- Senhas armazenadas somente como hash
-- Argon2id ou bcrypt
+- Senhas armazenadas somente como hash (**bcrypt**)
 - Autenticação segura
+- Recuperação de senha com token de uso único, expiração e hash no banco
 - Autorização por função
 - Validação de entrada
 - Proteção contra SQL Injection
 - Proteção contra XSS
 - CORS configurado
-- Rate limiting
-- Validação de uploads
-- Limitação de tamanho de arquivos
+- Rate limiting (login, recuperação de senha e reports)
+- Validação de uploads (tipo e tamanho)
 - Variáveis de ambiente para segredos
 - Proteção das rotas administrativas
 - Validação Premium no backend
+- URLs assinadas para mídia Premium
+- Verificação de assinatura e idempotência nos webhooks
 
 A estratégia definitiva de sessão/token será definida durante a implementação da autenticação.
 
@@ -956,21 +1171,27 @@ FREE
 ├── Inferno
 └── anúncios
 
-PREMIUM
+PREMIUM (pagamento único)
 ├── todos os mapas
 ├── todas as utilitárias
 └── sem anúncios
 ```
 
-O preço e o gateway de pagamento ainda serão definidos.
+O preço e o gateway de pagamento ainda serão definidos. O gateway deve suportar Pix.
+
+### Manutenção do conteúdo
+
+A Valve atualiza mapas e altera o map pool competitivo, o que pode quebrar lineups. Como o Premium é permanente, o preço deve considerar o custo contínuo de manter o conteúdo atualizado.
+
+### Anúncios
 
 Os anúncios nunca deverão interromper a consulta principal.
 
-Não serão utilizados, como regra de UX:
+Não serão utilizados:
 
 - Pop-ups sobre a lineup
 - Vídeos obrigatórios
-- Anúncios antes do GIF
+- Anúncios antes da execução
 - Esperas de 10–30 segundos para acessar uma utilitária
 
 ---
@@ -1001,21 +1222,22 @@ Hover:            #FF8C1A
 
 O **laranja** será utilizado como cor de destaque.
 
-Tipografia sugerida:
-
-**Manrope**
-
-A identidade visual oficial foi definida a partir da referência visual aprovada durante o planejamento.
+Tipografia sugerida: **Manrope**
 
 ---
 
 ## 🖼️ Referência visual aprovada
 
-A imagem abaixo é a referência visual oficial do frontend definida durante o planejamento do EZSmoke.
-
 ![Referência visual do frontend](docs/design/ezsmoke-frontend-reference.png)
 
 Essa referência deve ser preservada durante a implementação. Novos componentes podem ser criados, mas não devem descaracterizar o padrão visual aprovado.
+
+### Ajustes a aplicar sobre a referência
+
+- "Assinar Premium" → **"Desbloquear Premium"**
+- "Utilitários CS2" → **"Utilitárias CS2"**
+- "Todos os utilitários disponíveis" → **"Todas as utilitárias disponíveis"**
+- O logo oficial do CS2 no rodapé deve ser removido ou substituído por texto, e o rodapé deve conter o aviso de não afiliação (ver [Aviso legal](#️-aviso-legal))
 
 Princípios visuais:
 
@@ -1027,6 +1249,8 @@ Princípios visuais:
 - Interface mobile-first
 - Sem aparência de portal de notícias, curso ou rede social
 
+---
+
 # 📱 Responsividade
 
 O projeto será **mobile-first**.
@@ -1037,7 +1261,7 @@ No mobile:
 - Dois cards de mapas por linha
 - Filtros compactos
 - Cards de lineup adaptados à largura
-- GIF otimizado para visualização
+- Vídeo otimizado para visualização
 - Navegação simples
 
 No desktop:
@@ -1047,13 +1271,28 @@ No desktop:
 - Navegação completa
 - Conteúdo centralizado
 
+### Steam Overlay
+
+Muitos jogadores consultam conteúdo pelo navegador do overlay da Steam (Shift+Tab), em uma janela pequena sobre o jogo. O layout deve ser testado nesse contexto.
+
 A experiência e o conteúdo devem permanecer consistentes entre dispositivos.
 
 ---
 
-# 🚀 MVP
+# ⚖️ Aviso legal
 
-O MVP deverá conter:
+O rodapé do site deverá conter um aviso como:
+
+```text
+O EZSmoke não é afiliado, patrocinado ou endossado pela Valve Corporation.
+Counter-Strike 2 é marca registrada da Valve Corporation.
+```
+
+O site não deve utilizar o logo oficial do Counter-Strike 2 como elemento da própria marca.
+
+---
+
+# 🚀 MVP
 
 ### Produto
 
@@ -1063,24 +1302,32 @@ O MVP deverá conter:
 - [ ] Filtros
 - [ ] Cards de lineups
 - [ ] Página individual
-- [ ] GIF de execução
+- [ ] Vídeo de execução
 - [ ] Free/Premium
+
+### Conteúdo
+
+- [ ] Dust II completo (20–30 lineups)
+- [ ] Inferno completo (20–30 lineups)
+- [ ] 2–3 mapas Premium com conteúdo relevante
 
 ### Usuários
 
 - [ ] Cadastro
 - [ ] Login
 - [ ] Sessão persistente
+- [ ] Recuperação de senha
 - [ ] Usuário Free
 - [ ] Usuário Premium
 
 ### Administração
 
 - [ ] Login administrativo
-- [ ] CRUD de lineups
+- [ ] CRUD de lineups (rascunho → publicado → inativo)
 - [ ] Upload de mídia
 - [ ] Gerenciamento de mapas
 - [ ] Reports
+- [ ] Reembolso / revogação de Premium
 
 ### Backend
 
@@ -1089,7 +1336,9 @@ O MVP deverá conter:
 - [ ] Autenticação
 - [ ] Autorização
 - [ ] Validação Premium
-- [ ] Busca
+- [ ] URLs assinadas para mídia
+- [ ] Webhook com verificação de assinatura e idempotência
+- [ ] Busca (interpretação de termos + FULLTEXT)
 - [ ] Filtros
 
 ### Infraestrutura
@@ -1097,7 +1346,8 @@ O MVP deverá conter:
 - [ ] Hosting frontend
 - [ ] Hosting backend
 - [ ] MySQL
-- [ ] Storage de mídia
+- [ ] Storage de mídia com URLs assinadas
+- [ ] Envio de e-mail (recuperação de senha)
 - [ ] Domínio
 - [ ] HTTPS
 
@@ -1105,8 +1355,7 @@ O MVP deverá conter:
 
 # 🔮 Futuro
 
-Funcionalidades que podem ser consideradas posteriormente:
-
+- Login via Steam
 - Favoritos
 - Histórico
 - Preferências do usuário
@@ -1116,7 +1365,7 @@ Funcionalidades que podem ser consideradas posteriormente:
 - Sinônimos
 - Estatísticas
 - Novos benefícios para usuários cadastrados
-- Formatos de mídia mais eficientes
+- WebM como formato adicional de mídia
 - Novos modelos de monetização, se necessários
 
 Essas funcionalidades não fazem parte do MVP atual.
@@ -1125,13 +1374,9 @@ Essas funcionalidades não fazem parte do MVP atual.
 
 # 📍 Princípio principal do projeto
 
-Toda decisão de produto deve respeitar a proposta:
-
 > **EZSmoke não quer ensinar o jogador a jogar CS2.**
 >
 > **EZSmoke quer ajudá-lo a encontrar rapidamente a utilitária que ele já quer executar.**
-
-### Fluxo ideal
 
 ```text
                  EZSMOKE
@@ -1159,28 +1404,72 @@ Toda decisão de produto deve respeitar a proposta:
 
 ## 🛠️ Próximos passos de desenvolvimento
 
-1. Finalizar e validar o schema SQL
-2. Criar o projeto backend
-3. Configurar TypeScript + Express
-4. Configurar MySQL
-5. Implementar repositories
-6. Implementar services
-7. Implementar controllers
-8. Implementar rotas
-9. Implementar autenticação
-10. Criar frontend
-11. Integrar frontend e API
-12. Implementar painel administrativo
-13. Configurar storage de mídia
-14. Implementar Premium/pagamento
-15. Testar
-16. Deploy
+A ordem prioriza colocar a parte Free no ar cedo, para testar em partidas reais antes de implementar pagamento.
+
+1. Validar o schema SQL (`database/schema.sql`)
+2. Reorganizar o repositório em `backend/` e `frontend/`
+3. Criar o projeto backend (TypeScript + Express)
+4. Configurar MySQL e seed com lineups reais
+5. API somente leitura: mapas, lineups, busca e filtros
+6. Definir a stack e criar o frontend da parte Free
+7. Configurar storage de mídia
+8. **Deploy da parte Free** e testes com jogadores
+9. Painel administrativo
+10. Autenticação (com recuperação de senha, ou login via Steam)
+11. Premium: compra, webhook e URLs assinadas
+12. Anúncios
+13. Testes
+14. Lançamento
+
+---
+
+# 📝 Revisão v2 — 31/10/2026
+
+Alterações em relação à primeira versão do planejamento:
+
+**Produto**
+- Terminologia padronizada como "utilitária"
+- CTA "Assinar Premium" substituído por "Desbloquear Premium" (o modelo é pagamento único)
+- Overpass incluído na lista de mapas Premium
+- Troca rápida de mapa documentada na página do mapa
+- Meta de conteúdo de lançamento definida
+- Recuperação de senha incluída no MVP
+- Login via Steam registrado como alternativa em avaliação
+- Visitantes podem enviar reports
+- Aviso de não afiliação à Valve
+
+**Mídia**
+- GIF substituído por vídeo curto MP4 em autoplay/loop/mudo
+- Banco passa a guardar a chave da mídia, não uma URL pública
+
+**Segurança**
+- Versão bloqueada da lineup não envia campos de execução nem mídia
+- URLs assinadas com expiração para mídia
+- Webhook com verificação de assinatura e idempotência
+- Premium derivado exclusivamente de compras `PAID`
+
+**Banco de dados**
+- `lineups`: `slug`, `area`, `click_type`, `movement`, `throw_technique`, `status` (substitui `is_active`), `execution_media_key`, índice FULLTEXT
+- `premium_purchases`: `amount_cents`, `currency`, `refunded_at`, `refunded_by`, `refund_note`, status `FAILED`, índice único do pagamento
+- `maps`: `sort_order`
+- `reports`: `user_id` opcional, `resolved_by`, `resolved_at`
+- Novas tabelas: `password_reset_tokens`, `webhook_events`
+
+**Busca**
+- Interpretação de termos (mapa, tipo, lado, região) antes da busca textual
+- FULLTEXT no lugar de `LIKE`
+
+**Arquitetura**
+- Repositório organizado em `backend/`, `frontend/` e `database/`
+- Camada `integrations/` para pagamento, storage e e-mail
+- Hash de senha definido como bcrypt
+- Ordem de desenvolvimento revisada
 
 ---
 
 ## 📄 Documentação
 
-Este README representa as decisões de produto e arquitetura definidas durante a fase inicial de planejamento do EZSmoke.
+Este README representa as decisões de produto e arquitetura do EZSmoke.
 
 Decisões futuras devem ser adicionadas à documentação antes de alterar componentes importantes do sistema.
 
