@@ -1,0 +1,42 @@
+@baseUrl = http://localhost:3333/api
+
+### 1. Cadastro
+POST {{baseUrl}}/auth/register
+Content-Type: application/json
+
+{
+  "name": "Usuário Teste",
+  "email": "teste@ezsmoke.com",
+  "password": "senha12345"
+}
+
+### 2. Login
+# @name login
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "teste@ezsmoke.com",
+  "password": "senha12345"
+}
+
+### 3. Quem sou eu (com o token do login)
+GET {{baseUrl}}/auth/me
+Authorization: Bearer {{login.response.body.$.data.token}}
+
+### 4. Quem sou eu (sem token)
+GET {{baseUrl}}/auth/me
+
+### 5. Quem sou eu (token falso)
+GET {{baseUrl}}/auth/me
+Authorization: Bearer token-inventado
+
+### 6. Detalhe Free (sem login)
+GET {{baseUrl}}/maps/dust2/lineups/smoke-xbox
+
+### 7. Detalhe Premium (sem login)
+GET {{baseUrl}}/maps/mirage/lineups/smoke-jungle
+
+### 8. Detalhe Premium (com login)
+GET {{baseUrl}}/maps/mirage/lineups/smoke-jungle
+Authorization: Bearer {{login.response.body.$.data.token}}

@@ -15,7 +15,7 @@ export async function findAllMaps() {
         `SELECT id, name, slug, image_url, is_free
          FROM maps
          WHERE is_active = TRUE
-         ORDER BY id ASC`
+         ORDER BY sort_order ASC, id ASC`
     );
 
     return rows.map((map) => ({

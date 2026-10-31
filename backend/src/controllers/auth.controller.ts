@@ -1,5 +1,5 @@
 import type { Request, Response } from "express";
-import { loginUser } from "../services/auth.service.js";
+import { getCurrentUser, loginUser } from "../services/auth.service.js";
 
 export async function loginAccount(req: Request, res: Response) {
     try {
@@ -38,6 +38,31 @@ export async function loginAccount(req: Request, res: Response) {
         return res.status(500).json({
             success: false,
             message: "Erro interno ao realizar login.",
+        });
+    }
+}
+
+export async function getMe(_req: Request, res: Response) {
+    try {
+        const user = await getCurrentUser(res.locals.userId);
+
+        return res.status(200).json({
+            success: true,
+            data: user,
+        });
+    } catch (error) {
+        if (error instanceof Error && error.message === "USER_NOT_FOUND") {
+            return res.status(401).json({
+                success: false,
+                message: "Sessão inválida. Faça login novamente.",
+            });
+        }
+
+        console.error("Erro ao buscar usuário atual:", error);
+
+        return res.status(500).json({
+            success: false,
+            message: "Erro interno ao buscar o usuário.",
         });
     }
 }

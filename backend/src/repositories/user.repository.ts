@@ -41,4 +41,17 @@ export async function createUser(data: CreateUserData) {
         email: data.email,
         role: "USER",
     };
+};
+
+export async function findUserById(id: number) {
+    const [rows] = await database.query<UserRow[]>(
+        `SELECT id, name, email, password_hash, role
+         FROM users
+         WHERE id = ?
+         LIMIT 1`,
+        [id],
+    );
+
+    return rows[0] ?? null;
 }
+

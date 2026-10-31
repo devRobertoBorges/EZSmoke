@@ -7,4 +7,12 @@ export const env = {
     dbUser: process.env.DB_USER || "root",
     dbPassword: process.env.DB_PASSWORD || "",
     dbName: process.env.DB_NAME || "ezsmoke",
+    jwtSecret: process.env.JWT_SECRET || "",
+    jwtExpiresInSeconds: 60 * 60 * 24 * 7, // 7 dias
 };
+
+// Sem a chave, qualquer token seria inseguro.
+// Melhor o servidor nem ligar do que funcionar desprotegido.
+if (env.jwtSecret.length < 32) {
+    throw new Error("JWT_SECRET ausente ou muito curto no arquivo .env");
+}
