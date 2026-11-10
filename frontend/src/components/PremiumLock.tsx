@@ -1,7 +1,12 @@
+import { Link, useLocation } from "react-router";
 import { Check, Crown } from "lucide-react";
+import { useAuth } from "../contexts/AuthContext";
 
 // Conteúdo do README → "Conteúdo Premium como marketing"
 export default function PremiumLock() {
+  const { user } = useAuth();
+  const location = useLocation();
+
   return (
     <div className="premium-lock">
       <div className="premium-lock__icon">
@@ -31,6 +36,20 @@ export default function PremiumLock() {
       <button type="button" className="button-primary" disabled>
         Desbloquear Premium
       </button>
+
+      {/* Visitante: talvez já seja Premium e só não esteja logado */}
+      {!user && (
+        <p className="premium-lock__login">
+          Já é Premium?{" "}
+          <Link
+            to="/entrar"
+            state={{ from: location.pathname }}
+            className="accent"
+          >
+            Entrar
+          </Link>
+        </p>
+      )}
     </div>
   );
 }

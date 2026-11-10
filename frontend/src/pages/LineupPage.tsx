@@ -1,3 +1,4 @@
+import { useAuth } from "../contexts/AuthContext";
 import { useEffect, useState, type ReactNode } from "react";
 import { Link, useParams } from "react-router";
 import {
@@ -31,7 +32,7 @@ interface DetailItem {
 export default function LineupPage() {
   // Ex.: /mapas/dust2/smoke-xbox → mapSlug = "dust2", lineupSlug = "smoke-xbox"
   const { mapSlug, lineupSlug } = useParams();
-
+  const { token, logout } = useAuth();  
   const [lineup, setLineup] = useState<LineupDetail | null>(null);
   const [status, setStatus] = useState<Status>("loading");
 
@@ -42,7 +43,8 @@ export default function LineupPage() {
     setStatus("loading");
     window.scrollTo(0, 0); // abre a página no topo
 
-    fetchLineupDetail(mapSlug, lineupSlug)
+    // Com token, o backend sabe quem é e libera o Premium para quem comprou
+    fetchLineupDetail(mapSlug, lineupSlug, token)
       .then((data) => {
         if (ignore) return;
         setLineup(data);
@@ -50,6 +52,13 @@ export default function LineupPage() {
       })
       .catch((error) => {
         if (ignore) return;
+
+        // Token vencido ou inválido: sai da conta.
+        // O token vira null, este efeito roda de novo e busca como visitante.
+        if (error instanceof ApiError && error.status === 401) {
+          logout();
+          return;
+        }
 
         if (error instanceof ApiError && error.status === 404) {
           setStatus("not-found");
@@ -62,7 +71,7 @@ export default function LineupPage() {
     return () => {
       ignore = true;
     };
-  }, [mapSlug, lineupSlug]);
+  }, [mapSlug, lineupSlug, token, logout]);
 
   if (status === "loading") {
     return (
