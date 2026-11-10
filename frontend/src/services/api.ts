@@ -1,13 +1,26 @@
 import type { GameMap } from "../types/map";
-import type { LineupFilters, LineupSummary } from "../types/lineup";
-// Endereço do backend. No deploy, vem de uma variável de ambiente.
+import type {
+  LineupDetail,
+  LineupFilters,
+  LineupSummary,
+} from "../types/lineup";
+
 const API_URL = import.meta.env.VITE_API_URL ?? "http://localhost:3333/api";
 
-// Formato padrão das respostas do nosso backend
 interface ApiResponse<T> {
   success: boolean;
   data: T;
   message?: string;
+}
+
+// Erro que também carrega o código HTTP (404, 401, 500...)
+export class ApiError extends Error {
+  status: number;
+
+  constructor(message: string, status: number) {
+    super(message);
+    this.status = status;
+  }
 }
 
 async function request<T>(path: string): Promise<T> {
@@ -15,7 +28,10 @@ async function request<T>(path: string): Promise<T> {
   const body = (await response.json()) as ApiResponse<T>;
 
   if (!response.ok || !body.success) {
-    throw new Error(body.message ?? "Erro ao comunicar com o servidor.");
+    throw new ApiError(
+      body.message ?? "Erro ao comunicar com o servidor.",
+      response.status,
+    );
   }
 
   return body.data;
@@ -26,7 +42,6 @@ export function fetchMaps() {
 }
 
 export function fetchLineups(filters: LineupFilters = {}) {
-  // Monta a parte "?map=dust2&side=TR..." só com os filtros preenchidos
   const params = new URLSearchParams();
 
   for (const [key, value] of Object.entries(filters)) {
@@ -35,4 +50,8 @@ export function fetchLineups(filters: LineupFilters = {}) {
 
   const query = params.toString();
   return request<LineupSummary[]>(`/lineups${query ? `?${query}` : ""}`);
+}
+
+export function fetchLineupDetail(mapSlug: string, lineupSlug: string) {
+  return request<LineupDetail>(`/maps/${mapSlug}/lineups/${lineupSlug}`);
 }
