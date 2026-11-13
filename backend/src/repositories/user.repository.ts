@@ -1,4 +1,3 @@
-
 import type { ResultSetHeader, RowDataPacket } from "mysql2/promise";
 import { database } from "../config/database.js";
 
@@ -8,6 +7,7 @@ interface UserRow extends RowDataPacket {
     email: string;
     password_hash: string;
     role: string;
+    is_active: number; // o MySQL devolve BOOLEAN como 0 ou 1
 }
 
 export interface CreateUserData {
@@ -18,11 +18,23 @@ export interface CreateUserData {
 
 export async function findUserByEmail(email: string) {
     const [rows] = await database.query<UserRow[]>(
-        `SELECT id, name, email, password_hash, role
+        `SELECT id, name, email, password_hash, role, is_active
          FROM users
          WHERE email = ?
          LIMIT 1`,
         [email],
+    );
+
+    return rows[0] ?? null;
+}
+
+export async function findUserById(id: number) {
+    const [rows] = await database.query<UserRow[]>(
+        `SELECT id, name, email, password_hash, role, is_active
+         FROM users
+         WHERE id = ?
+         LIMIT 1`,
+        [id],
     );
 
     return rows[0] ?? null;
@@ -41,17 +53,4 @@ export async function createUser(data: CreateUserData) {
         email: data.email,
         role: "USER",
     };
-};
-
-export async function findUserById(id: number) {
-    const [rows] = await database.query<UserRow[]>(
-        `SELECT id, name, email, password_hash, role
-         FROM users
-         WHERE id = ?
-         LIMIT 1`,
-        [id],
-    );
-
-    return rows[0] ?? null;
 }
-

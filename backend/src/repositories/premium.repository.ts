@@ -7,12 +7,16 @@ interface PremiumRow extends RowDataPacket {
 
 // Regra definida no README: o usuário é Premium se e somente se
 // existir uma compra com status PAID vinculada a ele.
+// Além disso, a conta precisa estar ativa.
 export async function userHasPremium(userId: number) {
     const [rows] = await database.query<PremiumRow[]>(
         `SELECT EXISTS (
             SELECT 1
-            FROM premium_purchases
-            WHERE user_id = ? AND status = 'PAID'
+            FROM premium_purchases p
+            INNER JOIN users u ON u.id = p.user_id
+            WHERE p.user_id = ?
+              AND p.status = 'PAID'
+              AND u.is_active = TRUE
         ) AS is_premium`,
         [userId],
     );

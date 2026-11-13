@@ -36,9 +36,24 @@ export async function registerUser(data: RegisterUserData) {
 
     const passwordHash = await bcrypt.hash(password, 12);
 
-    return createUser({
-        name,
-        email,
-        passwordHash,
-    });
+    try {
+        return await createUser({
+            name,
+            email,
+            passwordHash,
+        });
+    } catch (error) {
+        // Dois cadastros com o mesmo e-mail ao mesmo tempo: a checagem acima
+        // passa para os dois, mas o UNIQUE do banco barra o segundo.
+        if (
+            typeof error === "object" &&
+            error !== null &&
+            "code" in error &&
+            error.code === "ER_DUP_ENTRY"
+        ) {
+            throw new Error("EMAIL_ALREADY_REGISTERED");
+        }
+
+        throw error;
+    }
 }

@@ -57,7 +57,15 @@ export async function getMe(_req: Request, res: Response) {
                 message: "Sessão inválida. Faça login novamente.",
             });
         }
-
+            if (
+            error instanceof Error &&
+            error.message === "ACCOUNT_DISABLED"
+        ) {
+            return res.status(403).json({
+                success: false,
+                message: "Esta conta está desativada. Entre em contato com o suporte.",
+            });
+        }
         console.error("Erro ao buscar usuário atual:", error);
 
         return res.status(500).json({
@@ -66,3 +74,4 @@ export async function getMe(_req: Request, res: Response) {
         });
     }
 }
+

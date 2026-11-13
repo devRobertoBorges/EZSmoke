@@ -1,8 +1,10 @@
 import bcrypt from "bcrypt";
-import { findUserByEmail } from "../repositories/user.repository.js";
-import { generateToken } from "../utils/token.js";
-import { findUserById } from "../repositories/user.repository.js";
+import {
+    findUserByEmail,
+    findUserById,
+} from "../repositories/user.repository.js";
 import { userHasPremium } from "../repositories/premium.repository.js";
+import { generateToken } from "../utils/token.js";
 
 interface LoginData {
     email: string;
@@ -27,16 +29,19 @@ export async function loginUser(data: LoginData) {
         throw new Error("INVALID_CREDENTIALS");
     }
 
-    const passwordMatches = await bcrypt.compare(
-        password,
-        user.password_hash,
-    );
+    const passwordMatches = await bcrypt.compare(password, user.password_hash);
 
     if (!passwordMatches) {
         throw new Error("INVALID_CREDENTIALS");
     }
 
-      return {
+    // Conferido só DEPOIS da senha: quem não sabe a senha
+    // não consegue descobrir que a conta existe e está desativada.
+    if (!user.is_active) {
+        throw new Error("ACCOUNT_DISABLED");
+    }
+
+    return {
         token: generateToken({ id: user.id, role: user.role }),
         user: {
             id: user.id,
@@ -50,7 +55,9 @@ export async function loginUser(data: LoginData) {
 export async function getCurrentUser(userId: number) {
     const user = await findUserById(userId);
 
-    if (!user) {
+    // Conta apagada ou desativada: o token deixa de valer.
+    // O frontend recebe 401 e desloga a pessoa sozinho.
+    if (!user || !user.is_active) {
         throw new Error("USER_NOT_FOUND");
     }
 

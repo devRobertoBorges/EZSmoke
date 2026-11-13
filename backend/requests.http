@@ -40,3 +40,12 @@ GET {{baseUrl}}/maps/mirage/lineups/smoke-jungle
 ### 8. Detalhe Premium (com login)
 GET {{baseUrl}}/maps/mirage/lineups/smoke-jungle
 Authorization: Bearer {{login.response.body.$.data.token}}
+
+### 9. Login com senha errada (para testar o limite)
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "teste@ezsmoke.com",
+  "password": "senha-errada"
+}
