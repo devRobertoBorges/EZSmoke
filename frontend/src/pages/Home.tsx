@@ -1,5 +1,7 @@
 import SearchBar from "../components/SearchBar";
 import MapsSection from "../components/MapsSection";
+import FeaturesStrip from "../components/FeaturesStrip";
+import PremiumBanner from "../components/PremiumBanner";
 
 export default function Home() {
   return (
@@ -26,6 +28,8 @@ export default function Home() {
       </section>
 
       <MapsSection />
+      <FeaturesStrip />
+      <PremiumBanner />
     </>
   );
 }

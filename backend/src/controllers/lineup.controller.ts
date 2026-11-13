@@ -89,8 +89,8 @@ export async function showLineup(req: Request, res: Response) {
     }
 
     try {
-        // Ainda não existe sessão: por enquanto ninguém é identificado.
-        // Na etapa de autenticação, o id do usuário logado entra aqui.
+        // Preenchido pelo optionalAuth quando há um token válido.
+        // Visitante sem login: fica undefined.
         const userId: number | undefined = res.locals.userId;
 
         const lineup = await getLineupDetail(mapSlug, slug, userId);

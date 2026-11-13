@@ -19,13 +19,19 @@ interface LineupCardRow extends RowDataPacket {
     map_is_free: number;
 }
 
+// Filtros já interpretados pelo service.
+// "text" já vem no formato da busca FULLTEXT (ex.: "+jungle*").
 export interface LineupFilters {
     map?: string;
     side?: string;
     region?: string;
     type?: string;
-    search?: string;
+    text?: string;
 }
+
+// Precisa ser exatamente a mesma lista de colunas do índice FULLTEXT no schema.sql
+const FULLTEXT_MATCH =
+    "MATCH (l.name, l.area, l.description, l.keywords) AGAINST (? IN BOOLEAN MODE)";
 
 export async function findAllLineups(filters: LineupFilters) {
     // Só lineups publicadas, de mapas ativos
@@ -55,17 +61,17 @@ export async function findAllLineups(filters: LineupFilters) {
         params.push(filters.type);
     }
 
-    if (filters.search) {
-        conditions.push(`(
-            l.name LIKE ?
-            OR l.area LIKE ?
-            OR l.description LIKE ?
-            OR l.keywords LIKE ?
-            OR m.name LIKE ?
-        )`);
+    if (filters.text) {
+        conditions.push(FULLTEXT_MATCH);
+        params.push(filters.text);
+    }
 
-        const searchTerm = `%${filters.search}%`;
-        params.push(searchTerm, searchTerm, searchTerm, searchTerm, searchTerm);
+    // Com busca textual, os resultados mais relevantes vêm primeiro
+    let orderBy = "m.sort_order ASC, l.name ASC";
+
+    if (filters.text) {
+        orderBy = `${FULLTEXT_MATCH} DESC, ${orderBy}`;
+        params.push(filters.text);
     }
 
     const sql = `
@@ -86,7 +92,7 @@ export async function findAllLineups(filters: LineupFilters) {
         FROM lineups l
         INNER JOIN maps m ON m.id = l.map_id
         WHERE ${conditions.join(" AND ")}
-        ORDER BY m.sort_order ASC, l.name ASC
+        ORDER BY ${orderBy}
     `;
 
     const [rows] = await database.query<LineupCardRow[]>(sql, params);

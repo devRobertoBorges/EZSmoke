@@ -1,9 +1,18 @@
 import { useState } from "react";
+import { useNavigate } from "react-router";
 import { ArrowRight, Search } from "lucide-react";
 
-export default function SearchBar() {
-  // Guarda o que o usuário está digitando
-  const [query, setQuery] = useState("");
+interface SearchBarProps {
+  initialQuery?: string;
+  autoFocus?: boolean;
+}
+
+export default function SearchBar({
+  initialQuery = "",
+  autoFocus = false,
+}: SearchBarProps) {
+  const [query, setQuery] = useState(initialQuery);
+  const navigate = useNavigate();
 
   return (
     <form
@@ -15,9 +24,8 @@ export default function SearchBar() {
         const term = query.trim();
         if (!term) return;
 
-        // Por enquanto só mostra no console (F12).
-        // Mais adiante, isso vai abrir a página de resultados.
-        console.log("Buscar:", term);
+        // encodeURIComponent protege caracteres especiais na URL (espaço, &, ?...)
+        navigate(`/busca?q=${encodeURIComponent(term)}`);
       }}
     >
       <Search className="search__icon" size={20} aria-hidden="true" />
@@ -29,6 +37,7 @@ export default function SearchBar() {
         aria-label="Buscar utilitária"
         value={query}
         onChange={(event) => setQuery(event.target.value)}
+        autoFocus={autoFocus}
       />
 
       <button className="search__button" type="submit" aria-label="Buscar">

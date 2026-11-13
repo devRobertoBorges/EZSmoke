@@ -1,5 +1,5 @@
 import { Link, NavLink } from "react-router";
-import { Crown, Menu, Search, User } from "lucide-react";
+import { Crown, Search, User } from "lucide-react";
 import Logo from "./Logo";
 import { useAuth } from "../contexts/AuthContext";
 
@@ -32,10 +32,9 @@ export default function Header() {
         </nav>
 
         <div className="header__actions">
-          <button className="icon-button header__search" aria-label="Buscar">
+          <Link to="/busca" className="icon-button header__search" aria-label="Buscar">
             <Search size={20} />
-          </button>
-
+          </Link>
           {/* Desktop: botão com texto. Some enquanto o login está sendo conferido. */}
           {status !== "loading" && (
             <Link
@@ -68,11 +67,10 @@ export default function Header() {
             )}
           </Link>
 
-          <button className="icon-button header__menu" aria-label="Abrir menu">
-            <Menu size={22} />
-          </button>
+
         </div>
       </div>
     </header>
   );
 }
+
